@@ -1,0 +1,12 @@
+[
+  {
+    "directory": "/home/jless/code/cppProjects/sdlTestBench",
+    "command": "g++ -Wall -g  -lSDL3 -c /home/jless/code/cppProjects/sdlTestBench/src/main.cpp",
+    "file": "/home/jless/code/cppProjects/sdlTestBench/src/main.cpp"
+  },
+  {
+    "directory": "/home/jless/code/cppProjects/sdlTestBench",
+    "command": "g++ -Wall -g  -lSDL3 -c /home/jless/code/cppProjects/sdlTestBench/src/testing.cpp",
+    "file": "/home/jless/code/cppProjects/sdlTestBench/src/testing.cpp"
+  }
+]
