@@ -24,9 +24,19 @@ struct vertex {
 
 static vertex vertices[]
 {
-    {0.0f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f},     // top vertex
+    //Triangle
+    {0.0f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f}, //Top vertex
+    {-0.5f, -0.5f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f}, //Bottom left vertex
+    {0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f}, //Bottom right vertex
+
+    //Square
+    {-0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f},    // top  left vertex
     {-0.5f, -0.5f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f},   // bottom left vertex
-    {0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f}     // bottom right vertex
+    {0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f},     // top right vertex
+    //Square pt 2
+    {0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f},     // top right
+    {-0.5f, -0.5f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f},   // bottom left vertex
+    {0.5f, -0.5f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f}     // bottom right vertex
 };
 
 SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
@@ -192,9 +202,9 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
   }
 
   const double tick = (double)(SDL_GetTicks()) / 1000;
-  const float red = (float)(0.9 + 0.9 * SDL_sin(tick));
-  const float blue = (float)(0.9 + 0.9 * SDL_sin(tick + SDL_PI_F * 2 / 3));
-  const float green = (float)(0.9 + 0.9 * SDL_sin(tick + SDL_PI_F * 4 / 3));
+  const float red = (float)(0.4 + 0.4 * SDL_sin(tick));
+  const float blue = (float)(0.4 + 0.4 * SDL_sin(tick + SDL_PI_F * 2 / 3));
+  const float green = (float)(0.4 + 0.4 * SDL_sin(tick + SDL_PI_F * 4 / 3));
 
   SDL_GPUColorTargetInfo cTI{};
   cTI.clear_color = {red, blue, green, 255/255.0f};
@@ -208,7 +218,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
   bufferBindings[0].buffer = vBuffer;
   bufferBindings[0].offset = 0;
   SDL_BindGPUVertexBuffers(rPass, 0, bufferBindings, 1);
-  SDL_DrawGPUPrimitives(rPass, 3, 1, 0, 0);
+  SDL_DrawGPUPrimitives(rPass, 6, 1, 0, 0);
 
   SDL_EndGPURenderPass(rPass);
   SDL_SubmitGPUCommandBuffer(cmd);
