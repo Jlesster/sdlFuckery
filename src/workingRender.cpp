@@ -1,12 +1,12 @@
-#include <SDL3/SDL_events.h>
-#include <SDL3/SDL_gpu.h>
-#include <SDL3/SDL_iostream.h>
-#include <SDL3/SDL_log.h>
-#include <SDL3/SDL_oldnames.h>
-#include <SDL3/SDL_video.h>
 #define SDL_MAIN_USE_CALLBACKS
-#include <SDL3/SDL_main.h>
 #include <SDL3/SDL.h>
+#include <SDL3/SDL_gpu.h>
+#include <SDL3/SDL_log.h>
+#include <SDL3/SDL_main.h>
+#include <SDL3/SDL_video.h>
+#include <SDL3/SDL_events.h>
+#include <SDL3/SDL_iostream.h>
+#include <SDL3/SDL_oldnames.h>
 
 SDL_Window* window;
 SDL_GPUDevice* device;
@@ -17,6 +17,12 @@ SDL_GPUGraphicsPipeline* graphicsPipeline;
 const int wWidth = 720;
 const int wHeight = 480;
 
+struct uniformBuffer {
+  float time;
+};
+
+static uniformBuffer timeUniform{};
+
 struct vertex {
   float x, y, z;
   float r, g, b, a;
@@ -24,19 +30,25 @@ struct vertex {
 
 static vertex vertices[]
 {
-    //Triangle
-    {0.0f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f}, //Top vertex
-    {-0.5f, -0.5f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f}, //Bottom left vertex
-    {0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f}, //Bottom right vertex
+  // //Triangle
+  // {0.0f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f}, //Top vertex
+  // {-0.5f, -0.5f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f}, //Bottom left vertex
+  // {0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f}, //Bottom right vertex
 
-    //Square
-    {-0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f},    // top  left vertex
-    {-0.5f, -0.5f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f},   // bottom left vertex
-    {0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f},     // top right vertex
-    //Square pt 2
-    {0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f},     // top right
-    {-0.5f, -0.5f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f},   // bottom left vertex
-    {0.5f, -0.5f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f}     // bottom right vertex
+  //Square in 2 triangles
+  {-0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f},    // top  left vertex
+  {-0.5f, -0.5f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f},   // bottom left vertex
+  {0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f},     // top right vertex
+  //Square pt 2
+  {0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f},     // top right
+  {-0.5f, -0.5f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f},   // bottom left vertex
+  {0.5f, -0.5f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f}     // bottom right vertex
+
+  // //square in 4 vertices
+  // {-0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f},
+  // {0.5f, 0.5f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f},
+  // {-0.5f, -0.5f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f},
+  // {0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f},
 };
 
 SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
@@ -131,7 +143,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
   fragmentInfo.num_samplers = 0;
   fragmentInfo.num_storage_buffers = 0;
   fragmentInfo.num_storage_textures = 0;
-  fragmentInfo.num_uniform_buffers = 0;
+  fragmentInfo.num_uniform_buffers = 1;
   SDL_GPUShader* fragmentShader = SDL_CreateGPUShader(device, &fragmentInfo);
   SDL_free(fragmentCode);
 
@@ -143,6 +155,10 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
   SDL_GPUGraphicsPipelineCreateInfo pipelineInfo{};
   pipelineInfo.vertex_shader = vertexShader;
   pipelineInfo.fragment_shader = fragmentShader;
+  //drawing triangle with 3 vertices
+  //and another triangle between v2 and v3 to v4 and so on
+  // pipelineInfo.primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLESTRIP;
+  //drawing triangle with strictly 3 vertices
   pipelineInfo.primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST;
 
   SDL_GPUVertexBufferDescription vertexBufferDescriptions[1];
@@ -218,6 +234,11 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
   bufferBindings[0].buffer = vBuffer;
   bufferBindings[0].offset = 0;
   SDL_BindGPUVertexBuffers(rPass, 0, bufferBindings, 1);
+
+  timeUniform.time = SDL_GetTicksNS() / 1e9f;
+  SDL_PushGPUFragmentUniformData(cmd, 0, &timeUniform, sizeof(uniformBuffer));
+
+  //drawing vertices here
   SDL_DrawGPUPrimitives(rPass, 6, 1, 0, 0);
 
   SDL_EndGPURenderPass(rPass);
